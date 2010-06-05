@@ -1,0 +1,4 @@
+How to get really dense layouts?
+1. Use typeface.js to render fonts and hack to get advanced font metric info.
+2. Use Canvas direct image pixel data API for collision detection/layout(but this might be slow)
+3. Prerender all characters for a font to get their shapes.
