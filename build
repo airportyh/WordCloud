@@ -16,7 +16,7 @@ def compress(file):
   return quote(call('yui-compressor %s' % file))
 
 files = [
-  'wordycloud.js',
+  'wordyclouds.js',
   'marklet.js'
 ]
 
