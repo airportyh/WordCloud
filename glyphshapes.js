@@ -1,6 +1,9 @@
 var canvas, context
 
-function toAscii(arr, width, height){
+function toAscii(imgData){
+    var arr = imgData.data
+    var height = imgData.height
+    var width = imgData.width
     var ret = ''
     for (var y = 0; y < height; y++){
         for (var x = 0; x < width; x++){
@@ -33,8 +36,7 @@ function go(){
     context.font = fontHeight + 'px ' + fontName
     context.fillText(text, 0, fontHeight)
     var imgData = context.getImageData(0, 0, canvas.width, canvas.height)
-    var pxlArr = imgData.data
-    console.log(toAscii(pxlArr, canvas.width, canvas.height))
+    console.log(toAscii(imgData))
 }
 
 window.onload = go
