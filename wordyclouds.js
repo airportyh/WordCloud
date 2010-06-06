@@ -111,6 +111,17 @@ function boxesOverlap(ax, ay, aw, ah, bx, by, bw, bh){
     return true
 }
 
+function stripHTML(oldString) {
+    var data = []
+    var inTag = false;
+    for(var i = 0; i < oldString.length; i++) {
+        var chr = oldString.charAt(i)
+        if (chr == '<') inTag = true;
+        if (chr == '>') inTag = false;
+        if(!inTag) data.push(chr)
+    }
+    return data.join('');
+}
 
 /* ========== Layouts ============================ */
 
@@ -155,6 +166,7 @@ Layouts.randomAvoid = function RandomAvoidLayout(freq, canvas, colors, fontName)
     //words = words.slice(0, 200)
     words.forEach(function(word){
         var textHeight = freq[word] * sizeScale
+        if (textHeight < 5) return
         //console.log('word[' + word + '].height = ' + textHeight)
         context.font = textHeight + 'px ' + fontName
         var textWidth = context.measureText(word).width
@@ -208,18 +220,20 @@ Layouts.randomAvoid = function RandomAvoidLayout(freq, canvas, colors, fontName)
         }else
             context.fillText(word, x, y)
         
-        if (vertical) context.rotate(0)
         //console.log('box[' + word + ']: ' + box)
     })
 }
 
-/* =========== Main ============================== */
+/* =========== main entry point ========================= */
 
-function main(){
-    var layout = Layouts.randomAvoid
-    var text = getText(document.body, ['script'])
+WordyClouds = {}
+WordyClouds.loadFromText = function(text){
     var commonWords = CommonWords.english
     var freq = wordSummary(text, commonWords)
+    this.loadFromWordFreq(freq)
+}
+WordyClouds.loadFromWordFreq = function(freq){
+    var layout = Layouts.randomAvoid
     var palate = ColorPalates.autumn
     var fontName = getComputedStyle(document.body)['font-family']
     var canvas = document.createElement('canvas')
@@ -232,4 +246,25 @@ function main(){
     document.body.style.overflow = 'hidden'
     layout(freq, canvas, palate, fontName)
 }
-
+WordyClouds.loadFromDelicious = function(username){
+    JSONP.get('http://feeds.delicious.com/feeds/json/tags/' + username, function(data){
+        WordyClouds.loadFromWordFreq(data)
+    })
+}
+WordyClouds.loadFromFeed = function(url, numEntries){
+   numEntries = numEntries || 10
+   var rand = new Date().getTime()
+   JSONP.get('http://www.google.com/uds/Gfeeds?context=1&num=' + numEntries + '&hl=en&output=json&q=' + url + '&v=1.0&nocache=' + rand, function(v, data){
+       var entries = data.feed.entries
+       var text = ''
+       entries.forEach(function(entry){
+           text += entry.title + '\n'
+           text += stripHTML(entry.content) + '\n'
+       })
+       WordyClouds.loadFromText(text)
+   })
+}
+WordyClouds.runBookmarklet = function(){
+    var text = getText(document.body, ['script'])
+    this.loadFromText(text)
+}

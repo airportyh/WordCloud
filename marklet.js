@@ -1,1 +1,1 @@
-main()
+WordyClouds.runBookmarklet()
