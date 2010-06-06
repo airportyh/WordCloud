@@ -119,10 +119,10 @@ Layouts.randomAvoid = function RandomAvoidLayout(freq, canvas, colors, fontName)
             totalRelArea += wordArea
             wordCount++
         }
-        var area = (width - 3 * padding) * (height - 2 * padding)
+        var area = (width - 2 * padding) * (height - 2 * padding)
         return Math.sqrt(area / totalRelArea)
     }
-    var padding = 100
+    var padding = 20
     var context = canvas.getContext('2d')
     var sizeScale = estimateSizeScale(freq, canvas.width, canvas.height)
     console.log('sizeScale: ' + sizeScale)
@@ -140,8 +140,8 @@ Layouts.randomAvoid = function RandomAvoidLayout(freq, canvas, colors, fontName)
         var x, y
         var triesLeft = 10000, collided = true
         while(triesLeft > 0 && collided){
-            x = padding + Math.random() * (canvas.width - 3 * padding)
-            y = padding + Math.random() * (canvas.height - 2 * padding)
+            x = padding + Math.random() * (canvas.width - textWidth - 2 * padding)
+            y = padding + textHeight + Math.random() * (canvas.height - textHeight * 1.5 - 2 * padding)
             if (false){ //textHeight > 16){
                 // box-based collision detection
                 collided = boxes.reduce(function(curr, box){
@@ -151,10 +151,10 @@ Layouts.randomAvoid = function RandomAvoidLayout(freq, canvas, colors, fontName)
                 //console.log('bitmap-based for ' + word)
                 // bitmap-based collision detection
                 var pad = 5
-                var imgData = context.getImageData(x - pad, y - textHeight - pad, textWidth + 2 * pad, textHeight + 2 * pad)
+                var imgData = context.getImageData(x - pad, y - textHeight - pad, textWidth + 2 * pad, textHeight * 1.5 + 2 * pad)
                 var pxlArr = imgData.data
                 var painted = false
-                for (var i = 0; i < pxlArr.length; i++)
+                for (var i = 3; i < pxlArr.length; i+=4)
                     if (pxlArr[i] > 0){
                         painted = true
                         break
