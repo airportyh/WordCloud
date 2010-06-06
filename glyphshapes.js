@@ -29,7 +29,7 @@ function go(){
     context = canvas.getContext('2d')
     var fontName = 'Georgia'
     var fontHeight = 20
-    var text = 'abcdeABCDE'
+    var text = 'qftijQFTIJ'
     context.font = fontHeight + 'px ' + fontName
     canvas.width = context.measureText(text).width
     canvas.height = fontHeight

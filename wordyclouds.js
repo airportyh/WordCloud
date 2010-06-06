@@ -77,7 +77,16 @@ function calculateSizeScale(freq){
         if (freq[word] > max)
             max = freq[word]
     })
-    return 150 / max
+    return 110 / max
+}
+
+function boxesOverlap(ax, ay, aw, ah, bx, by, bw, bh){
+    var pad = 10
+    if (ax + aw + pad < bx) return false
+    if (bx + bw + pad < ax) return false
+    if (ay + ah * 0.5 + pad < by - bh) return false
+    if (by + bh * 0.5 + pad < ay - ah) return false
+    return true
 }
 
 
@@ -86,39 +95,97 @@ function calculateSizeScale(freq){
 var Layouts = {}
 
 Layouts.random = function RandomLayout(freq, canvas, colors){
+    var padding = 100
     var context = canvas.getContext('2d')
     var sizeScale = calculateSizeScale(freq)
     keys(freq).forEach(function(word){
-        var x = Math.random() * canvas.width
-        var y = Math.random() * canvas.height
+        var x = padding + Math.random() * (canvas.width - 3 * padding)
+        var y = padding + Math.random() * (canvas.height - 2 * padding)
         var c = Math.floor(Math.random() * colors.length)
-        console.log('color index: ' + c)
         var c = colors[c]
-        context.fillStyle = 'rgba(' + c[0] + ', ' + c[1] + ', ' + c[2] + ', 0.6)'
+        context.fillStyle = 'rgba(' + c.join(',') + ', 0.6)'
         context.font = (freq[word] * sizeScale) + 'px Arial'
         context.fillText(word, x, y)
     })
 }
 
-Layouts.packed = function PackedLayout(freq, canvas, colors){
+Layouts.randomAvoid = function RandomAvoidLayout(freq, canvas, colors, fontName){
+    function estimateSizeScale(freq, width, height){
+        var totalRelArea = 0
+        var wordCount = 0
+        for (var word in freq){
+            var fontSize = freq[word]
+            var wordArea = (fontSize * 1.2 * (word.length * fontSize * 0.8))
+            totalRelArea += wordArea
+            wordCount++
+        }
+        var area = (width - 3 * padding) * (height - 2 * padding)
+        return Math.sqrt(area / totalRelArea)
+    }
+    var padding = 100
     var context = canvas.getContext('2d')
-    var sizeScale = calculateSizeScale(freq)
-    keys(freq).forEach(function(word){
-        var fontSize = boxHeight = freq[word] * sizeScale
-        context.font = fontSize + 'px Arial'
-        var boxWidth = context.measureText(word)
-        
+    var sizeScale = estimateSizeScale(freq, canvas.width, canvas.height)
+    console.log('sizeScale: ' + sizeScale)
+    var boxes = []
+    var words = keys(freq).sort(function(one, other){
+        return freq[other] - freq[one]
+    })
+    //console.log('words sorted: ' + words)
+    //words = words.slice(0, 200)
+    words.forEach(function(word){
+        var textHeight = freq[word] * sizeScale
+        //console.log('word[' + word + '].height = ' + textHeight)
+        context.font = textHeight + 'px ' + fontName
+        var textWidth = context.measureText(word).width
+        var x, y
+        var triesLeft = 10000, collided = true
+        while(triesLeft > 0 && collided){
+            x = padding + Math.random() * (canvas.width - 3 * padding)
+            y = padding + Math.random() * (canvas.height - 2 * padding)
+            if (false){ //textHeight > 16){
+                // box-based collision detection
+                collided = boxes.reduce(function(curr, box){
+                    return curr || boxesOverlap(box[0], box[1], box[2], box[3], x, y, textWidth, textHeight)
+                }, false)
+            }else{
+                //console.log('bitmap-based for ' + word)
+                // bitmap-based collision detection
+                var pad = 5
+                var imgData = context.getImageData(x - pad, y - textHeight - pad, textWidth + 2 * pad, textHeight + 2 * pad)
+                var pxlArr = imgData.data
+                var painted = false
+                for (var i = 0; i < pxlArr.length; i++)
+                    if (pxlArr[i] > 0){
+                        painted = true
+                        break
+                    }
+                collided = painted
+            }
+            triesLeft--
+        }
+        if (triesLeft == 0)
+            console.log('Failed to avoid overlap for [' + word + ']')
+        var c = Math.floor(Math.random() * colors.length)
+        var c = colors[c]
+        context.fillStyle = 'rgba(' + c.join(',') + ', 1)'
+        context.font = textHeight + 'px ' + fontName
+        //console.log('fillText: ' + [word, x, y].join(', '))
+        context.fillText(word, x, y)
+        var box = [x, y, textWidth, textHeight]
+        //console.log('box[' + word + ']: ' + box)
+        boxes.push(box)
     })
 }
 
 /* =========== Main ============================== */
 
 function main(){
-    var layout = Layouts.random
+    var layout = Layouts.randomAvoid
     var text = getText(document.body, ['script'])
     var commonWords = CommonWords.english
     var freq = wordSummary(text, commonWords)
     var palate = ColorPalates.autumn
+    var fontName = getComputedStyle(document.body)['font-family']
     var canvas = document.createElement('canvas')
     canvas.width = window.innerWidth
     canvas.height = window.innerHeight
@@ -127,6 +194,6 @@ function main(){
     document.body.style.padding = '0'
     document.body.style.margin = '0'
     document.body.style.overflow = 'hidden'
-    layout(freq, canvas, palate)
+    layout(freq, canvas, palate, fontName)
 }
 
