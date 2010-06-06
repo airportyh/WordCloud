@@ -148,7 +148,6 @@ Layouts.randomAvoid = function RandomAvoidLayout(freq, canvas, colors, fontName)
     var context = canvas.getContext('2d')
     var sizeScale = estimateSizeScale(freq, canvas.width, canvas.height)
     console.log('sizeScale: ' + sizeScale)
-    var boxes = []
     var words = keys(freq).sort(function(one, other){
         return freq[other] - freq[one]
     })
@@ -159,21 +158,29 @@ Layouts.randomAvoid = function RandomAvoidLayout(freq, canvas, colors, fontName)
         //console.log('word[' + word + '].height = ' + textHeight)
         context.font = textHeight + 'px ' + fontName
         var textWidth = context.measureText(word).width
+        var vertical = Math.random() > 0.5
+        
         var x, y
         var triesLeft = 10000, collided = true
         while(triesLeft > 0 && collided){
-            x = padding + Math.random() * (canvas.width - textWidth - 2 * padding)
-            y = padding + textHeight + Math.random() * (canvas.height - textHeight * 1.5 - 2 * padding)
-            /*if (textHeight > 16){
-                // box-based collision detection
-                collided = boxes.reduce(function(curr, box){
-                    return curr || boxesOverlap(box[0], box[1], box[2], box[3], x, y, textWidth, textHeight)
-                }, false)
-            }else{*/
-                //console.log('bitmap-based for ' + word)
             // bitmap-based collision detection
             var pad = 5
-            var imgData = context.getImageData(x - pad, y - textHeight - pad, textWidth + 2 * pad, textHeight * 1.5 + 2 * pad)
+            var imgData
+            if (vertical){
+                
+                x = padding + textHeight * 1.5 + Math.random() * (canvas.width - textHeight * 1.5 - 2 * padding)
+                y = padding + textWidth + Math.random() * (canvas.height - textWidth - 2 * padding)
+                imgData = context.getImageData(
+                    x - textHeight * 1.5 - pad, y - textWidth - pad, 
+                    textHeight * 1.5 + 2 * pad, textWidth + 2 * pad)
+            }else{
+                
+                x = padding + Math.random() * (canvas.width - textWidth - 2 * padding)
+                y = padding + textHeight + Math.random() * (canvas.height - textHeight * 1.5 - 2 * padding)
+                imgData = context.getImageData(
+                    x - pad, y - textHeight - pad, 
+                    textWidth + 2 * pad, textHeight * 1.5 + 2 * pad)
+            }
             var pxlArr = imgData.data
             var painted = false
             for (var i = 3; i < pxlArr.length; i+=4)
@@ -182,7 +189,6 @@ Layouts.randomAvoid = function RandomAvoidLayout(freq, canvas, colors, fontName)
                     break
                 }
             collided = painted
-            //}
             triesLeft--
         }
         if (triesLeft == 0)
@@ -192,10 +198,18 @@ Layouts.randomAvoid = function RandomAvoidLayout(freq, canvas, colors, fontName)
         context.fillStyle = 'rgba(' + c.join(',') + ', 1)'
         context.font = textHeight + 'px ' + fontName
         //console.log('fillText: ' + [word, x, y].join(', '))
-        context.fillText(word, x, y)
-        var box = [x, y, textWidth, textHeight]
+        
+        if (vertical){
+            context.save()
+            context.translate(x, y)
+            context.rotate(-Math.PI / 2)
+            context.fillText(word, 0, 0)
+            context.restore()
+        }else
+            context.fillText(word, x, y)
+        
+        if (vertical) context.rotate(0)
         //console.log('box[' + word + ']: ' + box)
-        boxes.push(box)
     })
 }
 
