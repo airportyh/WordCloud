@@ -115,7 +115,7 @@ Layouts.randomAvoid = function RandomAvoidLayout(freq, canvas, colors, fontName)
         var wordCount = 0
         for (var word in freq){
             var fontSize = freq[word]
-            var wordArea = (fontSize * 1.2 * (word.length * fontSize * 0.8))
+            var wordArea = (fontSize * 1.5 * (word.length * fontSize * 0.8))
             totalRelArea += wordArea
             wordCount++
         }
@@ -142,25 +142,25 @@ Layouts.randomAvoid = function RandomAvoidLayout(freq, canvas, colors, fontName)
         while(triesLeft > 0 && collided){
             x = padding + Math.random() * (canvas.width - textWidth - 2 * padding)
             y = padding + textHeight + Math.random() * (canvas.height - textHeight * 1.5 - 2 * padding)
-            if (false){ //textHeight > 16){
+            /*if (textHeight > 16){
                 // box-based collision detection
                 collided = boxes.reduce(function(curr, box){
                     return curr || boxesOverlap(box[0], box[1], box[2], box[3], x, y, textWidth, textHeight)
                 }, false)
-            }else{
+            }else{*/
                 //console.log('bitmap-based for ' + word)
-                // bitmap-based collision detection
-                var pad = 5
-                var imgData = context.getImageData(x - pad, y - textHeight - pad, textWidth + 2 * pad, textHeight * 1.5 + 2 * pad)
-                var pxlArr = imgData.data
-                var painted = false
-                for (var i = 3; i < pxlArr.length; i+=4)
-                    if (pxlArr[i] > 0){
-                        painted = true
-                        break
-                    }
-                collided = painted
-            }
+            // bitmap-based collision detection
+            var pad = 5
+            var imgData = context.getImageData(x - pad, y - textHeight - pad, textWidth + 2 * pad, textHeight * 1.5 + 2 * pad)
+            var pxlArr = imgData.data
+            var painted = false
+            for (var i = 3; i < pxlArr.length; i+=4)
+                if (pxlArr[i] > 0){
+                    painted = true
+                    break
+                }
+            collided = painted
+            //}
             triesLeft--
         }
         if (triesLeft == 0)
